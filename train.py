@@ -1,0 +1,80 @@
+import torch
+import time
+import utils
+import Config
+import test
+import attention_net as net
+from torch import nn
+import torch.optim as optim
+import torch.autograd as autograd
+import matplotlib.pyplot as plt
+#from tqdm import tqdm_notebook as tqdm
+from progress.bar import Bar
+
+def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
+    fcNet = net.Attention_Net(kmer_size)
+    criterion = nn.BCELoss()
+    optimizer = optim.SGD(fcNet.parameters(), lr=0.01, momentum=0.0)
+    losses, train_accuracies, test_accuracies = train_model(train_inputs, train_labels, test_data, test_labels, fcNet, optimizer, criterion, kmer_size, Config.with_attention)
+    #print('Losses>', losses)
+    if losses != None:
+        plt.plot(losses)
+        title = 'Loss vs Epochs for: ' + (str)(Config.positive_sample_size + Config.negative_sample_size) + ' data points and ' + (str)(Config.num_epochs) + ' epochs'
+        plt.title(title)
+    return train_accuracies, test_accuracies
+
+def train_epoch(model, inputs, labels, optimizer, criterion):
+    model.train()
+    losses = []
+    vocabulary = utils.create_vocabulary(Config.window_size)
+    labels_hat = []
+    j = 0
+    correct, wrong = 0,0
+    for data in inputs.itertuples():
+        gene = data.Gene
+        input_ = torch.tensor([vocabulary[gene[i:i+Config.window_size]] for i in range(0, len(gene) - Config.window_size + 1)], dtype=torch.long)
+        #data_batch = inputs[i:i + batch_size, :]
+        #labels_batch = labels[i:i + batch_size, :]
+        inputs = autograd.Variable(input_)
+        label = autograd.Variable(labels[j])
+        j += 1
+        optimizer.zero_grad()
+        # (1) Forward
+        label_hat = model(input_)
+        # (2) Compute diff
+        loss = criterion(label_hat, label)
+        # (3) Compute gradients
+        losses.append(loss.data.numpy())
+        loss.backward(retain_graph = False)
+        # (4) update weights
+        optimizer.step()        
+        labels_hat.append(label_hat)
+        correct, wrong = utils.get_train_accuracy(label_hat, j-1, len(labels), correct, wrong)
+        
+
+    #print('labels_hat size>', len(labels_hat))
+    loss = sum(losses)/len(losses)
+    
+    return loss, labels_hat, tuple((correct, wrong))
+    
+def train_model(train_inputs, train_labels, test_data, test_labels, model, optimizer, criterion, kmer_size, with_attention):
+    losses = []
+    print('Training the model:')
+    start_time = time.time()
+    train_accuracies, test_accuracies = [], []
+    labels_hat = []
+    test_labels = utils.get_labels(Config.positive_test_sample_size, Config.negative_test_sample_size)
+    bar = Bar('Processing', max=Config.num_epochs)
+    for epoch in range(Config.num_epochs):  # loop over the dataset multiple times
+        loss, labels_hat, acc = train_epoch(model, train_inputs, train_labels, optimizer, criterion)
+        losses.append(loss)
+        train_accuracy = 100*(acc[0]/(acc[0]+acc[1]))
+        train_accuracies.append(train_accuracy)
+        torch.save(model.state_dict(), Config.test_model_name)
+        test_accuracy = test.test(test_data, test_labels, kmer_size, Config.test_model_name)
+        test_accuracies.append(test_accuracy)
+        bar.next()
+    bar.finish()
+    torch.save(model.state_dict(), Config.model_name)
+    print('Finished. Training took %.3f' %((time.time() - start_time)/60), 'minutes.')
+    return losses, train_accuracies, test_accuracies
