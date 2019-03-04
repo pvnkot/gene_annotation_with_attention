@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torch.autograd as autograd
 import time
 from tqdm import tqdm_notebook as tqdm
+import matplotlib.pyplot as plt
 import train
 import Config
 import utils
@@ -42,3 +43,13 @@ if __name__ == '__main__':
     test_accuracy = test.test(test_data, test_labels, kmer_size, Config.model_name)
     print('Training accuracy for the trained model is: ', train_accuracies[len(train_accuracies)-1])
     print('Overall Test Accuracy is: ' , test_accuracy)
+    if train_accuracies != None and test_accuracies != None:
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracies')
+        plt.plot(train_accuracies)
+        plt.plot(test_accuracies)
+        plt.gca().legend(('Training', 'Test'))
+        
+        title = 'Test and Training Accuracies vs Epochs for: ' + (str)(Config.positive_sample_size + Config.negative_sample_size) + ' data points and ' + (str)(Config.num_epochs) + ' epochs'
+        plt.title(title)
+        plt.show()

@@ -1,4 +1,3 @@
-
 import torch
 from torch import nn
 import torch
@@ -14,21 +13,25 @@ class Attention_Net(nn.Module):
         #embeds are of the dimension n * (1 x (embedding_size * no_of_kmers))
         self.embeds = nn.Embedding(len(utils.create_vocabulary(Config.window_size)), Config.embedding_size)
         self.embeds_size = Config.embedding_size*(kmer_size)
-        #self.attn_weights = nn.Parameter(torch.randn(embeds_size, embeds_size))
+        #self.attn_weights = nn.Parameter(autograd.Variable(torch.randn(self.embeds_size, self.embeds_size)))
+        self.attn_weights = autograd.Variable(torch.randn(self.embeds_size, self.embeds_size))
+        #attn_weights = autograd.Variable(torch.randn(self.embeds_size, self.embeds_size))
         self.tanh = torch.tanh
         self.fc1 = nn.Linear(self.embeds_size, Config.hidden_layer_size)
         self.relu = F.relu
+        #self.context = None
         self.sigmoid = nn.Sigmoid()
-        #self.fc2 = nn.Linear(hidden_layer_size, hidden_layer_size_2)
-        #self.fc2 = nn.Linear(hidden_layer_size, hidden_layer_size_2)
         self.fc2 = nn.Linear(Config.hidden_layer_size, 1)
         #self.out = nn.Linear(hidden_layer_size_2, 1)
 
     def forward(self, inputs):
         embedding_weights = self.embeds(inputs).view((1,-1))
-        attn_weights = autograd.Variable(torch.randn(self.embeds_size, self.embeds_size))
-        transformation = self.tanh(torch.mm(embedding_weights, attn_weights))
-        context = self.sigmoid(transformation)
+        #self.attn_weights = torch.nn.Parameter(self.attn_weights)
+        #attn_weights = autograd.Variable(torch.randn(self.embeds_size, self.embeds_size))
+        #attn_weights = torch.nn.Parameter(attn_weights)       
+        transformation = self.tanh(torch.mm(embedding_weights, self.attn_weights))
+        transformation = nn.functional.softmax(transformation, dim=1)
+        context = torch.nn.Parameter(transformation)
         
 #         print(embedding_weights.shape)
 #         print(context.shape)

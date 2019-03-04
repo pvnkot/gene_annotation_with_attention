@@ -14,7 +14,7 @@ from progress.bar import Bar
 def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
     fcNet = net.Attention_Net(kmer_size)
     criterion = nn.BCELoss()
-    optimizer = optim.SGD(fcNet.parameters(), lr=0.01, momentum=0.0)
+    optimizer = optim.SGD(fcNet.parameters(), lr=Config.learning_rate, momentum=0.0)
     losses, train_accuracies, test_accuracies = train_model(train_inputs, train_labels, test_data, test_labels, fcNet, optimizer, criterion, kmer_size, Config.with_attention)
     #print('Losses>', losses)
     if losses != None:
@@ -27,7 +27,7 @@ def train_epoch(model, inputs, labels, optimizer, criterion):
     model.train()
     losses = []
     vocabulary = utils.create_vocabulary(Config.window_size)
-    labels_hat = []
+    #labels_hat = []
     j = 0
     correct, wrong = 0,0
     for data in inputs.itertuples():
@@ -48,25 +48,26 @@ def train_epoch(model, inputs, labels, optimizer, criterion):
         loss.backward(retain_graph = False)
         # (4) update weights
         optimizer.step()        
-        labels_hat.append(label_hat)
+        #labels_hat.append(label_hat)
         correct, wrong = utils.get_train_accuracy(label_hat, j-1, len(labels), correct, wrong)
         
 
     #print('labels_hat size>', len(labels_hat))
     loss = sum(losses)/len(losses)
     
-    return loss, labels_hat, tuple((correct, wrong))
+    return loss, tuple((correct, wrong))
     
 def train_model(train_inputs, train_labels, test_data, test_labels, model, optimizer, criterion, kmer_size, with_attention):
     losses = []
     print('Training the model:')
     start_time = time.time()
     train_accuracies, test_accuracies = [], []
-    labels_hat = []
+    #labels_hat = []
     test_labels = utils.get_labels(Config.positive_test_sample_size, Config.negative_test_sample_size)
     bar = Bar('Processing', max=Config.num_epochs)
+    #print('Attention Weights before training:', model.context)
     for epoch in range(Config.num_epochs):  # loop over the dataset multiple times
-        loss, labels_hat, acc = train_epoch(model, train_inputs, train_labels, optimizer, criterion)
+        loss, acc = train_epoch(model, train_inputs, train_labels, optimizer, criterion)
         losses.append(loss)
         train_accuracy = 100*(acc[0]/(acc[0]+acc[1]))
         train_accuracies.append(train_accuracy)
@@ -75,6 +76,7 @@ def train_model(train_inputs, train_labels, test_data, test_labels, model, optim
         test_accuracies.append(test_accuracy)
         bar.next()
     bar.finish()
-    torch.save(model.state_dict(), Config.model_name)
+    torch.save(model.state_dict(), Config.test_model_name)
     print('Finished. Training took %.3f' %((time.time() - start_time)/60), 'minutes.')
+    #print('Attention Weights after training:', model.context)
     return losses, train_accuracies, test_accuracies
