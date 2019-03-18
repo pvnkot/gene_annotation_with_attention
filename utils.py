@@ -1,9 +1,16 @@
 import torch
 from torch import nn
 import Config
+import pandas as pd
+import numpy as np
 
 def get_labels(positive_sample_size, negative_sample_size):
-    labels = torch.cat((torch.ones([Config.positive_sample_size, 1,1], dtype=torch.float), torch.zeros([Config.negative_sample_size, 1,1], dtype=torch.float)))
+    #labels = torch.cat((torch.ones([Config.positive_sample_size, 1,1], dtype=torch.float), torch.zeros([Config.negative_sample_size, 1,1], dtype=torch.float)))
+    
+    zeros = pd.DataFrame(np.zeros((negative_sample_size, 1), dtype=int))
+    ones = pd.DataFrame(np.ones((positive_sample_size, 1), dtype=int))
+    labels = pd.concat([ones, zeros])
+    labels.columns = ['label']
     return labels
 
 def embeddings_helper(window_size):

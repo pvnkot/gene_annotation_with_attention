@@ -21,6 +21,7 @@ def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
         plt.plot(losses)
         title = 'Loss vs Epochs for: ' + (str)(Config.positive_sample_size + Config.negative_sample_size) + ' data points and ' + (str)(Config.num_epochs) + ' epochs'
         plt.title(title)
+        plt.show()
     return train_accuracies, test_accuracies
 
 def train_epoch(model, inputs, labels, optimizer, criterion):

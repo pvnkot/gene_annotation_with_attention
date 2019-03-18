@@ -6,6 +6,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.autograd as autograd
 import time
+import pandas as pd
+from sklearn.model_selection import train_test_split
 from tqdm import tqdm_notebook as tqdm
 import matplotlib.pyplot as plt
 import train
@@ -17,6 +19,9 @@ def get_data(sample_file, sample_size):
     #return pd.read_csv(sample_file, header = None, nrows = sample_size)
     return pd.read_fwf(sample_file, sep = '\n', header = None, nrows = sample_size)
 
+def data_shuffle(data, labels):
+    return train_test_split(data, labels, test_size=Config.test_size, random_state=Config.seed)
+
 if __name__ == '__main__':
     #Read from text files and create Train Data
     positive_train_data = get_data(Config.positive_train_sample_file, Config.positive_sample_size)
@@ -25,16 +30,24 @@ if __name__ == '__main__':
     negative_train_data.columns = ["Gene"]
     
     #Read from text files and create Test Data
-    positive_test_data = get_data(Config.positive_test_sample_file, Config.positive_test_sample_size)
-    negative_test_data = get_data(Config.negative_test_sample_file, Config.negative_test_sample_size)
-    positive_test_data.columns = ["Gene"]
-    negative_test_data.columns = ["Gene"]
+    # positive_test_data = get_data(Config.positive_test_sample_file, Config.positive_test_sample_size)
+    # negative_test_data = get_data(Config.negative_test_sample_file, Config.negative_test_sample_size)
+    # positive_test_data.columns = ["Gene"]
+    # negative_test_data.columns = ["Gene"]
     
-    train_data = positive_train_data.append(negative_train_data)
-    train_labels = utils.get_labels(Config.positive_sample_size, Config.negative_sample_size)
+    data_bef_shuf = positive_train_data.append(negative_train_data)
+    labels_bef_shuf = utils.get_labels(Config.positive_sample_size, Config.negative_sample_size)
 
-    test_data = positive_test_data.append(negative_test_data)
-    test_labels = utils.get_labels(Config.positive_test_sample_size, Config.negative_test_sample_size)
+    # Shuffling the data
+    train_data, test_data, train_labels, test_labels = data_shuffle(data_bef_shuf, labels_bef_shuf)
+
+    #Typecasting labels to a torch tensor
+    train_labels = torch.tensor(train_labels['label'].values, dtype=torch.float) #Cast the labels to type float tensor
+    test_labels = torch.tensor(test_labels['label'].values, dtype=torch.float) #Cast the labels to type float tensor
+    #labels_.type()
+
+    # test_data = positive_test_data.append(negative_test_data)
+    # test_labels = utils.get_labels(Config.positive_test_sample_size, Config.negative_test_sample_size)
 
     kmer_size = len(positive_train_data.Gene[0]) - Config.window_size + 1
 
