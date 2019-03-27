@@ -8,7 +8,6 @@ from torch import nn
 import torch.optim as optim
 import torch.autograd as autograd
 import matplotlib.pyplot as plt
-#from tqdm import tqdm_notebook as tqdm
 from progress.bar import Bar
 
 def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
@@ -16,7 +15,6 @@ def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
     criterion = nn.BCELoss()
     optimizer = optim.SGD(fcNet.parameters(), lr=Config.learning_rate, momentum=0.0)
     losses, train_accuracies, test_accuracies = train_model(train_inputs, train_labels, test_data, test_labels, fcNet, optimizer, criterion, kmer_size, Config.with_attention)
-    #print('Losses>', losses)
     if losses != None:
         plt.plot(losses)
         title = 'Loss vs Epochs for: ' + (str)(Config.positive_sample_size + Config.negative_sample_size) + ' data points and ' + (str)(Config.num_epochs) + ' epochs'
@@ -27,13 +25,10 @@ def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
 def train_epoch(model, inputs, labels, optimizer, criterion):
     model.train()
     losses = []
-    #vocabulary = utils.create_vocabulary(Config.window_size)
-    #labels_hat = []
     j = 0
     correct, wrong = 0,0
     inputs = utils.generateInputs(inputs)
     labels_hat = []
-    #print("generated Inputs.")
     for i in range(0, len(inputs), Config.batch_size):
         data_batch = inputs[i:i + Config.batch_size]
         labels_batch = labels[i:i + Config.batch_size]
@@ -48,26 +43,6 @@ def train_epoch(model, inputs, labels, optimizer, criterion):
         optimizer.step()        
         losses.append(loss.data.numpy())
         labels_hat.append(labels_batch_hat)
-        
-    # for data in inputs.itertuples():
-    #     gene = data.Gene
-    #     input_ = torch.tensor([vocabulary[gene[i:i+Config.window_size]] for i in range(0, len(gene) - Config.window_size + 1)], dtype=torch.long)
-    #     #data_batch = inputs[i:i + batch_size, :]
-    #     #labels_batch = labels[i:i + batch_size, :]
-    #     inputs = autograd.Variable(input_)
-    #     label = autograd.Variable(labels[j])
-    #     j += 1
-    #     optimizer.zero_grad()
-    #     # (1) Forward
-    #     label_hat = model(input_)
-    #     # (2) Compute diff
-    #     loss = criterion(label_hat, label)
-    #     # (3) Compute gradients
-    #     losses.append(loss.data.numpy())
-    #     loss.backward(retain_graph = False)
-    #     # (4) update weights
-    #     optimizer.step()        
-    #     #labels_hat.append(label_hat)
         correct, wrong = utils.get_train_accuracy(labels_batch_hat, labels_batch, j-1, len(labels_batch), correct, wrong)
         
         
