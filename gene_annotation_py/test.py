@@ -4,8 +4,8 @@ import Config
 import utils
 from collections import OrderedDict
 
-def test(inputs, labels, kmer_size, model_name):
-    model = net.Attention_Net(kmer_size)
+def test(inputs, labels, sent_size, model_name):
+    model = net.Attention_Net(sent_size)
     model.load_state_dict(torch.load(Config.test_model_name))
     
     model.eval()

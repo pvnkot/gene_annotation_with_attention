@@ -49,11 +49,11 @@ if __name__ == '__main__':
     # test_data = positive_test_data.append(negative_test_data)
     # test_labels = utils.get_labels(Config.positive_test_sample_size, Config.negative_test_sample_size)
 
-    kmer_size = len(positive_train_data.Gene[0]) - Config.window_size + 1
+    sent_size = len(positive_train_data.Gene[0]) - Config.window_size + 1
 
-    train_accuracies, test_accuracies = train.train(train_data, train_labels, test_data, test_labels, kmer_size)#Train the model
+    train_accuracies, test_accuracies = train.train(train_data, train_labels, test_data, test_labels, sent_size)#Train the model
 
-    test_accuracy = test.test(test_data, test_labels, kmer_size, Config.model_name)
+    test_accuracy = test.test(test_data, test_labels, sent_size, Config.model_name)
     print('Training accuracy for the trained model is: ', train_accuracies[len(train_accuracies)-1])
     print('Overall Test Accuracy is: ' , test_accuracy)
     if train_accuracies != None and test_accuracies != None:

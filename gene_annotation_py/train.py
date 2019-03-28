@@ -10,11 +10,11 @@ import torch.autograd as autograd
 import matplotlib.pyplot as plt
 from progress.bar import Bar
 
-def train(train_inputs, train_labels, test_data, test_labels, kmer_size):
-    fcNet = net.Attention_Net(kmer_size)
+def train(train_inputs, train_labels, test_data, test_labels, sent_size):
+    fcNet = net.Attention_Net(sent_size)
     criterion = nn.BCELoss()
     optimizer = optim.SGD(fcNet.parameters(), lr=Config.learning_rate, momentum=0.0)
-    losses, train_accuracies, test_accuracies = train_model(train_inputs, train_labels, test_data, test_labels, fcNet, optimizer, criterion, kmer_size, Config.with_attention)
+    losses, train_accuracies, test_accuracies = train_model(train_inputs, train_labels, test_data, test_labels, fcNet, optimizer, criterion, sent_size, Config.with_attention)
     if losses != None:
         plt.plot(losses)
         title = 'Loss vs Epochs for: ' + (str)(Config.positive_sample_size + Config.negative_sample_size) + ' data points and ' + (str)(Config.num_epochs) + ' epochs'
@@ -54,7 +54,7 @@ def train_epoch(model, inputs, labels, optimizer, criterion):
     # print("Labels hat list >> ", labels_hat)
     return loss, tuple((correct, wrong))
     
-def train_model(train_inputs, train_labels, test_data, test_labels, model, optimizer, criterion, kmer_size, with_attention):
+def train_model(train_inputs, train_labels, test_data, test_labels, model, optimizer, criterion, sent_size, with_attention):
     losses = []
     print('Training the model:')
     start_time = time.time()
@@ -69,7 +69,7 @@ def train_model(train_inputs, train_labels, test_data, test_labels, model, optim
         train_accuracy = 100*(acc[0]/(acc[0]+acc[1]))
         train_accuracies.append(train_accuracy)
         torch.save(model.state_dict(), Config.test_model_name)
-        test_accuracy = test.test(test_data, test_labels, kmer_size, Config.test_model_name)
+        test_accuracy = test.test(test_data, test_labels, sent_size, Config.test_model_name)
         test_accuracies.append(test_accuracy)
         bar.next()
     bar.finish()
