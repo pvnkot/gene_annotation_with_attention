@@ -109,3 +109,17 @@ def generateInputs(inputs):
     #     print(data[i:i+10])
     #     print("---------------------------")
     return data
+
+def apply_attention(attention_net, attn_weights, embedding_weights):
+    #transformation = attention_net.tanh(torch.mm(embedding_weights, attention_net.attn_weights))
+    transformation = nn.functional.softmax(torch.mm(embedding_weights, attention_net.attn_weights))
+    #transformation = nn.functional.softmax(transformation, dim=1) 
+    
+    return embedding_weights * transformation
+    #return embedding_weights
+
+def check_model_parameters(model):
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            #print (name, data)
+            print (name)
