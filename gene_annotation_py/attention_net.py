@@ -21,7 +21,7 @@ class Attention_Net(nn.Module):
         #self.embeds_size = sent_size # set this if we want the embeddings to be fed as vectors
         self.attn_weights = nn.Parameter(autograd.Variable(torch.randn(self.embeds_size, self.embeds_size)))
 
-        self.attention = MultiHeadAttention(Config.n_head, Config.d_model, Config.d_k, Config.d_v, dropout=Config.dropout);
+        self.attention = MultiHeadAttention(Config.n_head, Config.d_model, Config.d_k, Config.d_v, dropout=Config.attn_dropout);
         """
         Experimenting END
         """
@@ -42,7 +42,7 @@ class Attention_Net(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.fc2 = nn.Linear(Config.hidden_layer_size, 1)
         self.threshold = F.threshold
-        self.dropout = nn.Dropout(0.1)
+        self.dropout = nn.Dropout(Config.dropout)
         #self.out = nn.Linear(hidden_layer_size_2, 1)
 
     def forward(self, inputs):
@@ -54,29 +54,21 @@ class Attention_Net(nn.Module):
         """
         Experimenting END
         """
-        #self.attn_weights = torch.nn.Parameter(self.attn_weights)
-        #attn_weights = autograd.Variable(torch.randn(self.embeds_size, self.embeds_size))
-        #attn_weights = torch.nn.Parameter(attn_weights)       
-        # transformation = self.tanh(torch.mm(embedding_weights, self.attn_weights)) 
-        # transformation = nn.functional.softmax(transformation, dim=1) 
-        # context = torch.nn.Parameter(transformation) 
-        
-        # print(embedding_weights.shape)
-        # print(context.shape)
         
         # attended_inputs = embedding_weights * context 
-        # attended_inputs = embedding_weights
-        
-        attended_inputs = self.attention(embedding_weights, embedding_weights, embedding_weights, mask=Config.mask);
+        attended_inputs = embedding_weights
+        if Config.with_attention:
+            attended_inputs = self.attention(embedding_weights, embedding_weights, embedding_weights, mask=Config.mask);
         #attn_inputs = embedding_weights
         #print(attended_inputs)
         #attended_inputs = utils.apply_attention(self, self.attn_weights, embedding_weights)
-        attn_inputs = attended_inputs[0].view(-1, 495)
-        layer1 = self.fc1(attn_inputs) 
+            attended_inputs = attended_inputs[0].view(-1, self.embeds_size)
+        layer1 = self.fc1(attended_inputs)
+        layer1 = self.dropout(layer1)
         act1 = self.relu(layer1) 
         #act1 = self.threshold(layer1, 0.2, 0) 
         layer2 = self.fc2(act1) # 
-        #layer2 = self.dropout(layer2)
+        layer2 = self.dropout(layer2)
         act2 = self.relu(layer2)
         #act2 = self.threshold(layer2, 0.2, 0)
         """
@@ -133,7 +125,7 @@ class MultiHeadAttention(nn.Module):
         nn.init.normal_(self.w_ks.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
         nn.init.normal_(self.w_vs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
 
-        self.attention = DotProductAttention(scaling_factor=np.power(d_k, 0.5))
+        self.attention = DotProductAttention(scaling_factor=np.power(d_k, 0.5), attn_dropout=dropout)
         #self.layer_norm = nn.LayerNorm(d_model)
 
         self.fc = nn.Linear(n_head * d_v, d_model)
