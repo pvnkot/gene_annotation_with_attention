@@ -40,8 +40,8 @@ if __name__ == '__main__':
     train_data, test_data, train_labels, test_labels = data_shuffle(data_bef_shuf, labels_bef_shuf)
 
     #Typecasting labels to a torch tensor
-    train_labels = torch.tensor(train_labels['label'].values, dtype=torch.float, device=device) #Cast the labels to type float tensor
-    test_labels = torch.tensor(test_labels['label'].values, dtype=torch.float, device=device) #Cast the labels to type float tensor
+    train_labels = torch.tensor(train_labels['label'].values, dtype=torch.float) #Cast the labels to type float tensor
+    test_labels = torch.tensor(test_labels['label'].values, dtype=torch.float) #Cast the labels to type float tensor
     #labels_.type()
 
     # test_data = positive_test_data.append(negative_test_data)
@@ -52,6 +52,16 @@ if __name__ == '__main__':
     train_accuracies, test_accuracies = train.train(train_data, train_labels, test_data, test_labels, sent_size, device)#Train the model
 
     test_accuracy = test.test(test_data, test_labels, sent_size, Config.model_name, device)
+    print("The configuration for the current run are:")
+    print("Sample Size: ", str(Config.positive_sample_size + Config.negative_sample_size))
+    print("Learning rate: ", str(Config.learning_rate))
+    print("FC Layer Dropout: ", str(Config.dropout))
+    print("Attention dropout: ", str(Config.attn_dropout))
+    print("User defined Parameter d_a: ", str(Config.d_a))
+    print("Embedding Size: ", str(Config.embedding_size))
+    print("Number of epochs: ", str(Config.num_epochs))
+
+
     print('Training accuracy for the trained model is: ', train_accuracies[len(train_accuracies)-1])
     print('Overall Test Accuracy is: ' , test_accuracy)
     if train_accuracies != None and test_accuracies != None:

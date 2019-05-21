@@ -100,6 +100,8 @@ class StructuredSelfAttn(nn.Module):
         self.w_s2 = nn.Linear(self.d_a, self.n_hops, bias=False).to(device=device)# W_s2 of shape d_a, n_hops
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(dropout)
+        self.softmax = nn.Softmax(dim=2).to(device=device) #Need to check the meaning of dim=2
+
 
 
 
@@ -120,9 +122,11 @@ class StructuredSelfAttn(nn.Module):
         first_term = self.w_s1(self.dropout(compressed_embeddings))
         hbar = self.tanh(first_term)
         alphas = self.w_s2(hbar).view(size[0], size[1], -1)
-
-        attended_inputs = torch.mul(input_embeds, alphas)
-
-        #print(next)
         
+        
+        #attended_inputs = self.softmax(attended_inputs)
+        #print(next)
+        alphas = self.softmax(alphas)
+        
+        attended_inputs = torch.mul(input_embeds, alphas)
         return attended_inputs

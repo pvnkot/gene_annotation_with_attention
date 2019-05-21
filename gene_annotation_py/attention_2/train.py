@@ -19,6 +19,30 @@ def train(train_inputs, train_labels, test_data, test_labels, sent_size, device)
     criterion = nn.BCELoss()
     optimizer = optim.SGD(fcNet.parameters(), lr=Config.learning_rate, momentum=0.0)
     losses, train_accuracies, test_accuracies = train_model(train_inputs, train_labels, test_data, test_labels, fcNet, optimizer, criterion, sent_size, Config.with_attention, device)
+    losses_file = open(Config.losses_file,'w')
+
+    """
+    Write losses to file
+    """
+    for loss in losses:
+        losses_file.write(str(loss) + '\n')
+    losses_file.close()
+    
+    """
+    Write train and test accuracies to file
+    """
+    train_acc_file = open(Config.train_acc_file, 'w')
+    test_acc_file = open(Config.test_acc_file, 'w')
+    for acc in train_accuracies:
+        train_acc_file.write(str(acc) + '\n')
+
+    for acc in test_accuracies:
+        test_acc_file.write(str(acc) + '\n')
+
+    train_acc_file.close()
+    test_acc_file.close()
+
+
     if losses != None:
         plt.plot(losses)
         title = 'Loss vs Epochs for: ' + (str)(Config.positive_sample_size + Config.negative_sample_size) + ' data points and ' + (str)(Config.num_epochs) + ' epochs'
@@ -45,7 +69,7 @@ def train_epoch(model, inputs, labels, optimizer, criterion, device):
         loss.backward()
         # (4) update weights
         optimizer.step()        
-        losses.append(loss.data.cpu().numpy())
+        losses.append(loss)
         labels_hat.append(labels_batch_hat)
         correct, wrong = utils.get_train_accuracy(labels_batch_hat, labels_batch, j-1, len(labels_batch), correct, wrong)
         
@@ -53,7 +77,7 @@ def train_epoch(model, inputs, labels, optimizer, criterion, device):
 
     #print('labels_hat size>', len(labels_hat))
     #correct, wrong = 2,1
-    loss = sum(losses)/len(losses)
+    loss = float(sum(losses)/len(losses))
     # print("Loss >> ", loss)
     # print("Labels hat list >> ", labels_hat)
     return loss, tuple((correct, wrong))
